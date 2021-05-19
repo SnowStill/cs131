@@ -1,0 +1,33 @@
+1.subset
+	Using a recursion to check if the head of list A is in the list B; if yes, continue the function with a new list by taking 
+off the head until it becomes an empty list and return true; if not, return false 
+2.equal sets
+	I was thinking about to make two recursion to chack if A has the element of B, and vise versa. But I realize that it will just turn out to be two subset function calls. Reccall the math property of subset, which two equal sets can be the subset of each other.
+3.set_union
+	Similar recursion here, but instead of returing T/F, we update the list b by returning it. So we iterate the list a to check if the list b has the element or not. If yes, contitue recursing with the rest of the list and do nothing to b; if not, add the element to the list b, since we want the elements in both a and b but not duplicated. I was thinking about to combine two lists then delete duuplicates, but that was tedious and not efficient
+4.set_symdiff
+	I had a hard time to figure out how to get the unique items from both lists a and b. I got the idea from the sample code published on the website https://rosettacode.org/wiki/Symmetric_difference#OCaml under Ocaml site. I learned that I can combine both outputs of a to b and b to a to the result by using (fun a b)@(fun b a). 
+5.self_member
+	Explained in the code, get the idea from the piazza post.
+6.computed_fixed_point
+	Just keep computing the function until it gets to the fixed points where the answer wouldn't change anymore.	
+7. 1)read and seperate left side and right side of input tuples
+   2)get the list of all non-terminal symbols list based on the starting symbol
+   	 While there's more NT symbols can be added from the rules list do:
+   	    iterate NTsymbols list
+	 	   if there's a NTsymbols contained under the iterated symbol
+		      add to the list
+		   else
+		      do nothing
+		   endif
+	 Endwhile
+   3)iterate the ruleslist
+     if the Ntsymbol is containd in the NTsymbol list
+   	add to the final list
+     else
+        do nothing
+    end if
+   4)return the final list.
+I optimized the code for the function allReachable. It was like 3-4 lins of code, but I realized that I could just
+use computed fixed points to get a stable state.
+I had a trouble to define the type N, which keeps calling the type error.

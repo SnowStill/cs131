@@ -1,0 +1,22 @@
+Ratio = 89.0 ? ;
+The ratio of runtime between plain and normal kenken is around 90 for the average in 4x4 matricx. I did not test 5x5 since it takes super long, also 6x6 would just take forever.
+
+no_op KenKen
+Beside N,C,T that we have already implemented, we also need to add a new term, O(operator), to be passsed to the solver
+
+For example, take the tesetcase2, the N and C is given without operator:
+noop_kenken_testcase(
+  4,
+  [
+   (6, [[1|1], [1|2], [2|1]]),
+   (96, [[1|3], [1|4], [2|2], [2|3], [2|4]]),
+   (1, [3|1], [3|2]),
+   (1, [4|1], [4|2]),
+   (8, [[3|3], [4|3], [4|4]]),
+   (2, [[3|4]])
+  ],
+  T
+),
+it should produce:
+O = [+,*,-,-,+,*]
+T = [[1,2,3,4],[3,4,2,1],[4,3,1,2],[2,1,4,3]]

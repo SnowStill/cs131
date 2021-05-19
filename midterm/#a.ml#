@@ -1,0 +1,3 @@
+let rec subset a b = match a with
+  |[] -> true
+  |head::tail -> if (List.mem head b) then (subset tail b) else false;;

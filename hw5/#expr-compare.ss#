@@ -1,0 +1,252 @@
+#lang racket
+;expr-compare
+
+ 
+
+(define (expr-compare x y)
+  (cond
+   [(and (empty? x) (empty? y)) '()]
+   [(equal? x y) x]
+   ;if they are not equal then do the following different cases:
+   ;for different booleans
+   [(and (boolean? x) (boolean? y))(if x '% '(not %))]
+   
+   ;for one is a list, the other one is not, or neither of them is a list
+   [(or (not (list? x)) (not (list? y))) 
+   `(if % ,x ,y)]
+
+   ;if both are lists
+   [(and (list? x) (list? y))
+	 (cond
+	  ;for different length
+	  [(not (equal? (length x) (length y)))
+	   `(if % ,x ,y)
+	  ]
+	  ;for the same length
+	  [else
+	   (compare-list x y)
+	  ]
+	 )
+    ]
+   ;for one is a list, the other one is not, or neither of them is a list
+   [(or (not (list? x)) (not (list? y)))
+   `(if % ,x ,y)]
+  )
+)
+(define (compare-list x y)
+    (cond
+       [(and (empty? x) (empty? y)) '()]
+       ;check if
+       [(xor (equal? (car x) 'if) (equal? (car y) 'if))
+	`(if % ,x ,y)]
+       ;check quote
+       [(or (equal? (car x) 'quote) (equal? (car y) 'quote))
+	`(if % ,x ,y)]
+       ;check lambda
+       [(and (equal? (car x) 'lambda) (equal? (car y) 'lambda))
+	(cons (car x) (lambda-compare (cdr x) (cdr y)))
+       ]
+       [(and (equal? (car x) 'λ) (equal? (car y) 'λ))
+        (cons (car x) (lambda-compare (cdr x) (cdr y)))
+       ]
+       [(and (equal? (car x) 'lambda) (equal? (car y) 'λ))
+        (cons 'λ (lambda-compare (cdr x) (cdr y)))
+       ]
+       [(and (equal? (car x) 'λ) (equal? (car y) 'lambda))
+	(cons 'λ (lambda-compare (cdr x) (cdr y)))
+       ]
+       ;other  cases
+       [else 
+	(cond
+	   ;if they are the same
+	   [(equal? (car x) (car y)) 
+	    (cons (car x) (compare-list (cdr x) (cdr y)))
+	   ]
+	   ;if it is the boolean
+	   [(and (boolean? (car x)) (boolean? (car y)))
+	    (cons (if (car x) '% '(not %)) (compare-list (cdr x) (cdr y)))
+           ]
+           ;if both are lists of same lengths, then check different elements
+	   [(and (list? (car x)) (list? (car y)))
+	    (cond
+	     [(not (equal? (length (car x)) (length (car y))))
+	      (cons ('if '% (car x) (car y)) (compare-list (cdr x) (cdr y)))
+	     ]
+	     [else
+	      (cons (compare-list (car x) (car y)) (compare-list (cdr x) (cdr y)))
+	     ]
+	    )
+	   ]
+	   ;for one is a list, the other one is not, or neither of them is a list
+           [(or (not (list? (car x))) (not (list? (car y))))
+            (cons `(if % ,(car x) ,(car y)) (compare-list (cdr x) (cdr y)))
+           ]
+	)
+       ]
+   )
+)  
+
+(define (lambda-compare x y)
+  ;compare the first element after lambda, it is usually the argument
+  (let ([dictx (cons (x_hash (car x) (car y)) '())]
+	[dicty (cons (y_hash (car x) (car y)) '())]
+	)
+    (cond
+     [(and (empty? x) (empty? y)) '()]
+     [(equal? (car x) (car y))
+      (cons (car x) (lambda-func-compare (cdr x) (cdr y) dictx dicty))
+      ]
+     [(or (not (list? (car x))) (not (list? (car y))))
+      (cons (string->symbol (string-append (symbol->string (car x)) "!" (symbol->string (car y)))) (lambda-func-compare (cdr x) (cdr y) dictx dicty))
+      ]
+     ;if both are list arguments
+     [(and (list? (car x)) (list? (car y)))
+      (cond
+       ;for different length
+       [(not (equal? (length (car x)) (length (car y))))
+	(cons `(if % ,(car x) ,(car y)) (lambda-func-compare (cdr x) (cdr y) dictx dicty))
+	]
+       ;for the same length
+       [else
+	(cons (lambda-arg-compare (car x) (car y)) (lambda-func-compare (cdr x) (cdr y) dictx dicty))
+	]
+       )
+      ]
+     )
+    )
+  )
+
+(define (lambda-arg-compare x y)
+;arg compare for the list arguments
+  (cond
+   [(and (empty? x) (empty? y)) '()]
+   [(equal? (car x) (car y))
+    (cons (car x) (lambda-arg-compare (cdr x) (cdr y)))
+   ]
+   [(or (not (list? (car x))) (not (list? (car y))))
+     (cons (string->symbol (string-append (symbol->string (car x)) "!" (symbol->string (car y)))) (lambda-arg-compare (cdr x) (cdr y)))
+   ]
+   ;if both are lists
+   [(and (list? (car x)) (list? (car y)))
+         (cond
+          ;for different length
+          [(not (equal? (length (car x)) (length (car y))))
+           (cons `(if % ,(car x) ,(car y)) (lambda-arg-compare (cdr x) (cdr y)))
+          ]
+          ;for the same length
+          [else
+           (cons (lambda-arg-compare (car x) (car y)) (lambda-arg-compare (cdr x) (cdr y)))
+          ]
+         )
+    ]
+  )
+)
+
+(define (lambda-func-compare x y dictx dicty)
+;function campare, x and y contains all the elements after the argument.
+;car x, y is the func element
+  (cond
+   [(and (empty? x) (empty? y)) '()]
+   [(equal? (car x) (car y)) (car x)]
+   [(and (boolean? (car x)) (boolean? (car y))) (if (car x) '% '(not %))]
+   [(or (not (list? (car x))) (not (list? (car y))))
+    (cons (string->symbol (string-append (symbol->string (car x)) "!" (symbol->string (car y)))) '())
+   ]
+   [(and (list? (car x)) (list? (car y)) (not (equal? (length (car x)) (length (car y)))))
+    (cons (string->symbol (string-append (symbol->string (car x)) "!" (symbol->string (car y)))) '())
+   ]
+   ;check if they are list and same length
+   [(and (list? (car x)) (list? (car y)) (equal? (length (car x)) (length (car y))))
+    (cons (func-list-compare (car x) (car y) dictx dicty) '())
+   ]
+  )
+)
+
+(define (func-list-compare x y dictx dicty)
+  (if (and (empty? x) (empty? y)) '()
+      (let ([x-hash (if (equal? (get-hash (car x) dictx) "Not Found") (car x) (get-hash (car x) dictx))]
+	    [y-hash (if (equal? (get-hash (car y) dicty) "Not Found") (car y) (get-hash (car y) dicty))])
+	(cond
+	 [(and (empty? x) (empty? y)) '()]
+	 [(equal? x-hash y-hash) (c(and (empty? x) (empty? y)) '()ons (car x) (func-list-compare (cdr x) (cdr y) dictx dicty))]
+	 [else
+	  (cons `(if % ,x-hash ,y-hash) (func-list-compare (cdr x) (cdr y) dictx dicty))
+	  ]
+	 )
+	)
+      )
+ )
+
+(define (x_hash x y)
+  (cond 
+   [(and (empty? x) (empty? y)) (hash)]
+   [(equal? (car x) (car y)) 
+    (hash-set (x_hash (cdr x) (cdr y)) (car x) (car x))]
+   [else 
+    (hash-set (x_hash (cdr x) (cdr y)) (car x) (string->symbol (string-append (symbol->string (car x)) "!" (symbol->string (car y)))))
+   ]
+   )
+)
+
+(define (y_hash x y)
+  (cond [(and (empty? x) (empty? y)) (hash)]
+        [(equal? (car x) (car y)) (hash-set (x_hash (cdr x) (cdr y)) (car y) (car y))]
+        [else (hash-set (y_hash (cdr x) (cdr y))
+                        (car y) (string->symbol (string-append (symbol->string (car x)) "!" (symbol->string (car y)))))]
+        ))
+
+
+(define (get-hash x hash-table)
+  (cond
+    [(empty? hash-table) "Not Found"]
+    [(not (equal? (hash-ref (car hash-table) x "Not Found") "Not Found")) 
+     (hash-ref (car hash-table) x "Not Found")
+    ]
+    [else 
+     (get-hash x (cdr hash-table))
+    ]
+    )
+)
+
+;test cases
+;(expr-compare 12 12)
+;(expr-compare 12 20)
+;(expr-compare #t #t)
+;(expr-compare #f #f)
+;(expr-compare #t #f)
+;(expr-compare #f #t)
+;(expr-compare '(/ 1 0) '(/ 1 0.0))
+;(expr-compare 'a '(cons a b))
+;(expr-compare '(cons a b) '(cons a b))
+;(expr-compare '(cons a lambda) '(cons a λ))
+;(expr-compare '(cons (cons a b) (cons b c))
+;              '(cons (cons a c) (cons a c)))
+;(expr-compare '(cons a b) '(list a b))
+;(expr-compare '(list) '(list a))
+;(expr-compare ''(a b) ''(a c))
+;(expr-compare '(quote (a b)) '(quote (a c)))
+;(expr-compare '(quote (a b)) '(quote (a b)))
+;(expr-compare '(quote (a b)) '(qk (a c)))
+
+;(expr-compare '(quoth (a b)) '(quoth (a c)))
+;(expr-compare '(if x y z) '(if x z z))
+;(expr-compare '(if x y z) '(g x y z))
+(expr-compare '((lambda (a) (f a)) 1) '((lambda (a) (g a)) 2))
+(expr-compare '((lambda (a) (f a)) 1) '((λ (a) (g a)) 2))
+(expr-compare '((lambda (a) a) c) '((lambda (b) b) d))
+(expr-compare ''((λ (a) a) c) ''((lambda (b) b) d))
+(expr-compare '(+ #f ((λ (a b) (f a b)) 1 2))
+              '(+ #t ((lambda (a c) (f a c)) 1 2)))
+(expr-compare '((λ (a b) (f a b)) 1 2)
+              '((λ (a b) (f b a)) 1 2))
+(expr-compare '((λ (a b) (f a b)) 1 2)
+              '((λ (a c) (f c a)) 1 2))
+;(expr-compare '((lambda (lambda) (+ lambda if (f lambda));) 3)
+;              '((lambda (if) (+ if if (f λ))) 3))
+;(expr-compare '((lambda (a) (eq? a ((λ (a b) ((λ (a b) (a; b)) b a))
+;                                    a (lambda (a) a))))
+;                (lambda (b a) (b a)))
+;             '((λ (a) (eqv? a ((lambda (b a) ((lambda (a ;b) (a b)) b a))
+;                                a (λ (b) a))))
+;                (lambda (a b) (a b))))
+

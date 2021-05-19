@@ -1,0 +1,8 @@
+Jaquez received AT Riley +1066905.3420670033 kiwi.cs.ucla.edu +34.068930-118.445127 1614209128.918963997 from ('127.0.0.1', 46396).
+The client has been added
+Succeed to connect the server: Riley
+flood message sent: AT Riley +1066905.3420670033 kiwi.cs.ucla.edu +34.068930-118.445127 1614209128.918963997
+Succeed to connect the server: Bernard
+flood message sent: AT Riley +1066905.3420670033 kiwi.cs.ucla.edu +34.068930-118.445127 1614209128.918963997
+Jaquez received AT Riley +1066905.3420670033 kiwi.cs.ucla.edu +34.068930-118.445127 1614209128.918963997 from ('127.0.0.1', 46404).
+The same message has been recieved, nothing changes.
